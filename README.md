@@ -1,4 +1,4 @@
-# u-net-image-segmantation
+# U-Net Image Segmantation
 A Deep Convolutional Encoder-Decoder Architecture for Image Segmentation.
 Image segmentation is the division of an image into regions or categories, which
 correspond to different objects or parts of objects. After segmentation, the output is
