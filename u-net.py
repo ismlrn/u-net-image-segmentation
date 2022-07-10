@@ -22,3 +22,20 @@ def load_data(path):
 train_images = load_data(train_path)
 test_images = load_data(test_path)
 print("Done loading images.")
+
+# spliting each image into half
+
+
+def split_image(images):
+    original = []
+    mask = []
+    for image in images:
+        original.append(image[:, :int(image.shape[1]/2), :])
+        mask.append(image[:, int(image.shape[1]/2):, :])
+    return original, mask
+
+
+train_original, train_mask = split_image(train_images)
+test_original, test_mask = split_image(test_images)
+
+# k-means clustering on images
