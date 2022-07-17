@@ -115,6 +115,33 @@ def pixel_to_centroids(images, centroids):
     return new_images
 
 
+def save_images(images, path):
+    for i in range(len(images)):
+        img = images[i]
+        min_val, max_val = img.min(), img.max()
+        img = 255.0*(img - min_val)/(max_val - min_val)
+        img = img.astype(np.uint8)
+        cv2.imwrite(path + str(i) + ".jpg", img)
+
+
+def get_list_of_images(path):
+    # get list of images
+    images = []
+    for filename in os.listdir(path):
+        if filename.endswith(".jpg"):
+            images.append(path + filename)
+    return images
+
+
+def read_images(images_path):
+    # read images
+    images = []
+    for filename in images_path:
+        if filename.endswith(".jpg"):
+            images.append(cv2.imread(filename))
+    return images
+
+
 train_images = load_data(train_path)
 test_images = load_data(test_path)
 print("Done loading images.")
@@ -144,3 +171,14 @@ centroids = [[157.77898, 147.46292, 178.24544],
 # labels, centroids = clustering(train_mask)
 # segmented = pixel_to_centroids(train_mask, centroids)
 # segmented_test = pixel_to_centroids(test_mask, centroids)
+# save_images(segmented, "Dataset/train_masked/")
+# save_images(segmented_test, "Dataset/test_masked/")
+
+# with open('cents.txt', 'w') as f:
+#         for c in centroids:
+#             f.write("%s\n" % c)
+
+
+segmented = np.array(read_images(get_list_of_images("Dataset/train_masked/")))
+segmented_test = np.array(read_images(
+    get_list_of_images("Dataset/test_masked/")))
