@@ -182,3 +182,76 @@ centroids = [[157.77898, 147.46292, 178.24544],
 segmented = np.array(read_images(get_list_of_images("Dataset/train_masked/")))
 segmented_test = np.array(read_images(
     get_list_of_images("Dataset/test_masked/")))
+print("Running model...")
+
+# defining U-net model
+
+
+def double_conv_block(x, n_filters):
+    x = layers.Conv2D(n_filters, 3, padding="same",
+                      activation="relu", kernel_initializer="he_normal")(x)
+    x = layers.Conv2D(n_filters, 3, padding="same",
+                      activation="relu", kernel_initializer="he_normal")(x)
+    return x
+
+
+def downsample_block(x, n_filters):
+    down_sampled = double_conv_block(x, n_filters)
+    max_pooled = layers.MaxPooling2D(2)(down_sampled)
+    max_pooled = layers.Dropout(0.3)(max_pooled)
+    return down_sampled, max_pooled
+
+
+def upsample_block(x, conv_features, n_filters):
+    up_sampled = layers.Conv2DTranspose(n_filters, 3, 2, padding="same")(x)
+    up_sampled = layers.concatenate([up_sampled, conv_features])
+    up_sampled = layers.Dropout(0.3)(up_sampled)
+    up_sampled = double_conv_block(up_sampled, n_filters)
+    return up_sampled
+
+
+def create_unet_model():
+    # Inputs
+    inputs = layers.Input(shape=(256, 256, 3))
+    # Encoder
+    down_sampled_1, max_pooled_1 = downsample_block(inputs, 32)
+    down_sampled_2, max_pooled_2 = downsample_block(max_pooled_1, 64)
+    down_sampled_3, max_pooled_3 = downsample_block(max_pooled_2, 128)
+    down_sampled_4, max_pooled_4 = downsample_block(max_pooled_3, 256)
+    # Bottle neck
+    bottleneck = double_conv_block(max_pooled_4, 512)
+    # Decoder
+    up_sampled_1 = upsample_block(bottleneck, down_sampled_4, 256)
+    up_sampled_2 = upsample_block(up_sampled_1, down_sampled_3, 128)
+    up_sampled_3 = upsample_block(up_sampled_2, down_sampled_2, 64)
+    up_sampled_4 = upsample_block(up_sampled_3, down_sampled_1, 32)
+    # Output
+    output = layers.Conv2D(3, 1, activation="softmax")(up_sampled_4)
+    model = tf.keras.Model(inputs, output, name="UNET")
+    return model
+
+
+def train_model(model, real_images_train, masked_images_train, real_images_test, masked_images_test):
+    # model.compile(optimizer='sgd', loss="categorical_crossentropy", metrics="accuracy")
+    # model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+    # loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='sgd',
+                  loss=BinaryFocalLoss(gamma=0.1), metrics=['accuracy'])
+    return model.fit(real_images_train, masked_images_train, epochs=110, validation_data=(real_images_train, masked_images_train))
+
+
+def predict_images(model, real_images_test, masked_images_test):
+    print(model.evaluate(real_images_test, masked_images_test))
+    return model.predict(real_images_test)
+
+
+# plt.imshow(segmented[3])
+model = create_unet_model()
+trained = train_model(
+    model, train_o, segmented, test_o, segmented_test)
+
+predicted_test = predict_images(
+    model, test_o, segmented_test)
+save_images(predicted_test, "./Dataset/predicted_test/")
+
+print(model.summary())
