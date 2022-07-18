@@ -10,6 +10,7 @@ recognition.
 Image segmentation works by using encoders and decoders. Encoders take in
 input, which is a raw image, it then extracts features, and finally, decoders generate
 an output which is an image with segments.
+![image](https://user-images.githubusercontent.com/96905677/179455667-28e502a2-223e-4e98-8408-128a90e87e54.png)
 
 ## Dataset:
 Cityscapes data contains labeled videos taken from vehicles driven in Germany.
